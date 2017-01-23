@@ -1,0 +1,218 @@
+# --- coding: utf-8 ---
+"""
+ブックストアの操作を行うためのクラスモジュール
+"""
+
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.keys import Keys
+from PIL import Image
+from os import path
+from bookstore.ImageFormat import ImageFormat
+from bookstore.Config import Config
+import os
+import time
+
+class BookstoreManager(object):
+    """
+    ブックストアの操作を行うためのクラス
+    """
+
+    IMAGE_DIRECTORY = '/tmp/k/'
+    """
+    画像を一時的に保存するディレクトリ
+    """
+
+    CHECK_Y = 100
+    """
+    画像の色の判定を行う Y 座標
+    """
+
+    def __init__(self, browser, config = None, directory = './', prefix = ''):
+        """
+        ブックストアの操作を行うためのコンストラクタ
+        @param browser splinter のブラウザインスタンス
+        """
+        self.browser = browser
+        """
+        splinter のブラウザインスタンス
+        """
+        self.config = config if isinstance(config, Config) else None
+        """
+        Bookstore の設定情報
+        """
+        self.directory = None
+        """
+        ファイルを出力するディレクトリ
+        """
+        self.prefix = None
+        """
+        出力するファイルのプレフィックス
+        """
+        self.setDirectory(directory)
+        self.setPrefix(prefix)
+        return
+
+    def setDirectory(self, directory):
+        """
+        ファイルを出力するディレクトリを設定する
+        """
+        self.directory = directory if directory[-1:] == '/' else directory + '/'
+        return
+
+    def setPrefix(self, prefix):
+        """
+        出力ファイルのプレフィックス
+        """
+        self.prefix = prefix
+        return
+
+    def start(self, url, number):
+        """
+        ページの自動スクリーンショットを開始する
+        @param url ブックストアのコンテンツの URL
+        @param number そのコンテンツの総ページ数
+        """
+        self.browser.visit(url)
+        time.sleep(2)
+        if self.isWarning():
+            self.agreeWarning()
+            time.sleep(2)
+        self.checkDirectory(self.IMAGE_DIRECTORY)
+        self.checkDirectory(self.directory)
+        total = self.getDisplayPage(number)
+        extension = self.getExtension()
+        format = self.getSaveFormat()
+        sleepTime = self.config.sleepTime if self.config is None else 0.5
+        for index in range(total):
+            self.previous()
+            time.sleep(0.02)
+        for index in range(total):
+            self.printProgress(total, index)
+            temporaryPath = self.IMAGE_DIRECTORY + 'K-AutoBook' + extension
+            self.browser.driver.save_screenshot(temporaryPath)
+            self.next()
+            self.triming(temporaryPath, '%s%s%03d%s' % (self.directory, self.prefix, index, extension), format)
+            time.sleep(sleepTime)
+        self.printProgress(total, isEnd = True)
+        return
+
+    def checkDirectory(self, directory):
+        """
+        ディレクトリの存在を確認して，ない場合はそのディレクトリを作成する
+        @param directory 確認するディレクトリのパス
+        """
+        if not path.isdir(directory):
+            try:
+                os.makedirs(directory)
+            except OSError as exception:
+                print("ディレクトリの作成に失敗しました({0})".format(directory))
+                raise
+        return
+
+    def getDisplayPage(self, page):
+        """
+        コンテンツの総ページ数から表示されるページ数を取得する
+        @param page コンテンツの総ページ数
+        @return 表示されるページ数
+        """
+        return int(page / 2) + 1
+
+    def printProgress(self, total, current = 0, isEnd = False):
+        """
+        進捗を表示する
+        @param total ページの総数
+        @param current 現在のページ数
+        @param 最後のページの場合は True を指定する
+        """
+        if isEnd:
+            print('%d/%d' % (total, total))
+        else:
+            print('%d/%d' % (current, total), end='')
+            print('\x1B[10000D', end='', flush=True)
+        return
+
+    def triming(self, source, destination, format):
+        """
+        画像の両端の色と異なる色になる場所でトリミングする
+        @param source 元となる画像のパス
+        @param destination 出力する画像のパス
+        @param format 書き出す画像のフォーマット
+        """
+        image = Image.open(source)
+        width, height = image.size
+        startX = 0
+        endX = width
+        base = image.getpixel((startX, self.CHECK_Y))
+        for pointX in range(width):
+            pixel = image.getpixel((pointX, self.CHECK_Y))
+            if base != pixel:
+                startX = pointX
+                break
+        for pointX in range(width)[::-1]:
+            pixel = image.getpixel((pointX, self.CHECK_Y))
+            if base != pixel:
+                endX = pointX + 1
+                break
+        image.crop((startX, 0, endX, height)).save(destination, 'jpeg')
+        return
+
+    def next(self):
+        """
+        次のページに進む
+        """
+        self.pressKey(Keys.ARROW_LEFT)
+        return
+
+    def previous(self):
+        """
+        前のページに戻る
+        """
+        self.pressKey(Keys.ARROW_RIGHT)
+        return
+
+    def pressKey(self, key):
+        """
+        指定したキーを押す
+        """
+        ActionChains(self.browser.driver).key_down(key).perform()
+        return
+
+    def isWarning(self):
+        """
+        警告文が表示されているかを確認する
+        @return 警告文が表示されている場合に True を返す
+        """
+        script = 'document.getElementById("binb").contentWindow.document.getElementById("warningPageFrame")'
+        return self.browser.evaluate_script(script) is not None
+
+    def agreeWarning(self):
+        """
+        警告文に同意してページを表示する
+        """
+        script = 'document.getElementById("binb").contentWindow.document.getElementById("warningPageFrame").contentWindow.document.getElementsByClassName("btnOK")[0].click()'
+        self.browser.execute_script(script)
+
+    def getExtension(self):
+        """
+        書き出すファイルの拡張子を取得する
+        @return 拡張子
+        """
+        if self.config is not None:
+            if self.config.imageFormat == ImageFormat.JPEG:
+                return '.jpg'
+            elif self.config.imageFormat == ImageFormat.PNG:
+                return '.png'
+        return '.jpg'
+
+    def getSaveFormat(self):
+        """
+        書き出すファイルフォーマットを取得する
+        @return ファイルフォーマット
+        """
+        if self.config is not None:
+            if self.config.imageFormat == ImageFormat.JPEG:
+                return 'jpeg'
+            elif self.config.imageFormat == ImageFormat.PNG:
+                return 'png'
+        return 'jpeg'
+
