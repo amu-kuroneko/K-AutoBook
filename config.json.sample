@@ -1,13 +1,13 @@
 {
-    "driver", "phantomjs",
-    "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X) AppleWebKit/538.1 (KHTML, like Gecko) PhantomJS/2.0.0 Safari/538.1",
+    "driver": "phantomjs",
+    "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.95 Safari/537.36",
     "window_size": {
         "width": 2880,
         "height": 1800
     },
     "log_directory": "/tmp/k_auto_book/",
     "bookstore": {
-        "use_login": false,
+        "needs_login": false,
         "username": "",
         "password": "",
         "image_format": "JPEG",
