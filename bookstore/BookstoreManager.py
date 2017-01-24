@@ -82,7 +82,7 @@ class BookstoreManager(object):
         total = self.getDisplayPage(number)
         extension = self.getExtension()
         format = self.getSaveFormat()
-        sleepTime = self.config.sleepTime if self.config is None else 0.5
+        sleepTime = self.config.sleepTime if self.config is not None else 0.5
         for index in range(total):
             self.previous()
             time.sleep(0.02)
