@@ -4,9 +4,9 @@
 """
 
 from urllib import request
-from lxml import html
 from os import path
 import os
+import re
 
 class AlphapolisManager(object):
     """
@@ -46,7 +46,7 @@ class AlphapolisManager(object):
 
     def start(self, url):
         """
-        ページの自動自動ダウンrノードを開始する
+        ページの自動自動ダウンロードを開始する
         @param url アルフォポリスのコンテンツの URL
         """
         self.checkDirectory(self.directory)
@@ -100,15 +100,6 @@ class AlphapolisManager(object):
         if response.getcode() != 200:
             print("漫画データの取得に失敗しました")
             return []
-        root = html.fromstring(response.read())
-        images = root.cssselect('.manga_image')
-        data = {}
-        for image in images:
-            page = int(image.getparent().attrib['page'])
-            data[page] = image.attrib['src']
-        result = []
-        for key, value in sorted(data.items()):
-            result.append(value)
-        return result
-
+        html = str(response.read())
+        return re.findall(r"_pages\.push\(\"(http[^\"]*\.jpg)\"\);", html)
 
