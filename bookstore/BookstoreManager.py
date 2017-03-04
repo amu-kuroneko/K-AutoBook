@@ -8,9 +8,11 @@ from selenium.webdriver.common.keys import Keys
 from PIL import Image
 from os import path
 from bookstore.ImageFormat import ImageFormat
+from bookstore.BoundOnSide import BoundOnSide
 from bookstore.Config import Config
 import os
 import time
+
 
 class BookstoreManager(object):
     """
@@ -27,7 +29,7 @@ class BookstoreManager(object):
     画像の色の判定を行う Y 座標
     """
 
-    def __init__(self, browser, config = None, directory = './', prefix = ''):
+    def __init__(self, browser, config=None, directory='./', prefix=''):
         """
         ブックストアの操作を行うためのコンストラクタ
         @param browser splinter のブラウザインスタンス
@@ -48,15 +50,25 @@ class BookstoreManager(object):
         """
         出力するファイルのプレフィックス
         """
+        self.nextKey = None
+        """
+        次のページに進むためのキー
+        """
+        self.previousKey = None
+        """
+        前のページに戻るためのキー
+        """
         self.setDirectory(directory)
         self.setPrefix(prefix)
+        self.setBoundOfSide(None)
         return
 
     def setDirectory(self, directory):
         """
         ファイルを出力するディレクトリを設定する
         """
-        self.directory = directory if directory[-1:] == '/' else directory + '/'
+        self.directory = directory if (
+            directory[-1:] == '/') else directory + '/'
         return
 
     def setPrefix(self, prefix):
@@ -66,12 +78,14 @@ class BookstoreManager(object):
         self.prefix = prefix
         return
 
-    def start(self, url, number):
+    def start(self, url, number, boundOnSide):
         """
         ページの自動スクリーンショットを開始する
         @param url ブックストアのコンテンツの URL
         @param number そのコンテンツの総ページ数
+        @param boundOnSide ページの綴じ場所
         """
+        self.setBoundOfSide(boundOnSide)
         self.browser.visit(url)
         time.sleep(2)
         if self.isWarning():
@@ -91,9 +105,10 @@ class BookstoreManager(object):
             temporaryPath = self.IMAGE_DIRECTORY + 'K-AutoBook' + extension
             self.browser.driver.save_screenshot(temporaryPath)
             self.next()
-            self.triming(temporaryPath, '%s%s%03d%s' % (self.directory, self.prefix, index, extension), format)
+            self.triming(temporaryPath, '%s%s%03d%s' % (
+                self.directory, self.prefix, index, extension), format)
             time.sleep(sleepTime)
-        self.printProgress(total, isEnd = True)
+        self.printProgress(total, isEnd=True)
         return
 
     def checkDirectory(self, directory):
@@ -117,7 +132,7 @@ class BookstoreManager(object):
         """
         return int(page / 2) + 1
 
-    def printProgress(self, total, current = 0, isEnd = False):
+    def printProgress(self, total, current=0, isEnd=False):
         """
         進捗を表示する
         @param total ページの総数
@@ -160,14 +175,14 @@ class BookstoreManager(object):
         """
         次のページに進む
         """
-        self.pressKey(Keys.ARROW_LEFT)
+        self.pressKey(self.nextKey)
         return
 
     def previous(self):
         """
         前のページに戻る
         """
-        self.pressKey(Keys.ARROW_RIGHT)
+        self.pressKey(self.previousKey)
         return
 
     def pressKey(self, key):
@@ -182,14 +197,17 @@ class BookstoreManager(object):
         警告文が表示されているかを確認する
         @return 警告文が表示されている場合に True を返す
         """
-        script = 'document.getElementById("binb").contentWindow.document.getElementById("warningPageFrame")'
+        script = 'document.getElementById("binb").contentWindow' + \
+            '.document.getElementById("warningPageFrame")'
         return self.browser.evaluate_script(script) is not None
 
     def agreeWarning(self):
         """
         警告文に同意してページを表示する
         """
-        script = 'document.getElementById("binb").contentWindow.document.getElementById("warningPageFrame").contentWindow.document.getElementsByClassName("btnOK")[0].click()'
+        script = 'document.getElementById("binb").contentWindow' + \
+            '.document.getElementById("warningPageFrame").contentWindow' + \
+            '.document.getElementsByClassName("btnOK")[0].click()'
         self.browser.execute_script(script)
 
     def getExtension(self):
@@ -216,3 +234,20 @@ class BookstoreManager(object):
                 return 'png'
         return 'jpeg'
 
+    def setBoundOfSide(self, boundOnSide):
+        """
+        ページの綴じ場所から次/前のページへの移動キーを設定する
+        @param boundOnSide ページの綴じ場所
+        """
+        result = BoundOnSide.RIGHT
+        if boundOnSide in {BoundOnSide.RIGHT, BoundOnSide.LEFT}:
+            result = boundOnSide
+        elif self.config is not None:
+            result = self.config.boundOnSide
+        if result == BoundOnSide.LEFT:
+            self.nextKey = Keys.ARROW_RIGHT
+            self.previousKey = Keys.ARROW_LEFT
+        else:
+            self.nextKey = Keys.ARROW_LEFT
+            self.previousKey = Keys.ARROW_RIGHT
+        return

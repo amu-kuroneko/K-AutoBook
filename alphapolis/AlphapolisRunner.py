@@ -7,6 +7,7 @@ import re
 from AbstractRunner import AbstractRunner
 from alphapolis.AlphapolisManager import AlphapolisManager
 
+
 class AlphapolisRunner(AbstractRunner):
     """
     アルファポリスの実行クラス
@@ -32,4 +33,3 @@ class AlphapolisRunner(AbstractRunner):
         manager = AlphapolisManager(destination)
         manager.start(self.url)
         return
-

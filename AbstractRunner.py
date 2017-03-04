@@ -6,6 +6,7 @@
 import re
 from abc import ABCMeta, abstractmethod
 
+
 class AbstractRunner(metaclass=ABCMeta):
     """
     実行するための抽象クラス
@@ -33,15 +34,17 @@ class AbstractRunner(metaclass=ABCMeta):
         """
         cls.checkers = []
         for pattern in cls.patterns:
-            cls.checkers.append(re.compile('https?:\/\/' + cls.domainPattern + '\/' + pattern))
+            cls.checkers.append(
+                re.compile(
+                    r'https?:\/\/' + cls.domainPattern + '\/' + pattern))
         return
 
     @classmethod
     def check(cls, url):
         """
         サポートしているかどうかの判定を行う
-        @param url サポートしているどうかを判定する URL
-        @return サポートしている場合に True を返す
+        @param url str サポートしているどうかを判定する URL
+        @return bool サポートしている場合に True を返す
         """
         if cls.checkers is None:
             cls.initializeChecker()
@@ -50,10 +53,13 @@ class AbstractRunner(metaclass=ABCMeta):
                 return True
         return False
 
-    def __init__(self, browser, url, config = None):
+    def __init__(self, browser, url, config=None, options=None):
         """
         ブックストアで実行するためのコンストラクタ
         @param borwser splinter のブラウザ情報
+        @param url str アクセスする URL
+        @param config Config 設定情報
+        @param options str オプション情報
         """
 
         self.browser = browser
@@ -70,6 +76,12 @@ class AbstractRunner(metaclass=ABCMeta):
         """
         設定
         """
+
+        self.options = self.parseOptions(options)
+        """
+        オプションとして指定する文字列
+        オプションのパース方法は継承先に依存する
+        """
         return
 
     @abstractmethod
@@ -78,3 +90,11 @@ class AbstractRunner(metaclass=ABCMeta):
         実行メソッド
         """
         pass
+
+    def parseOptions(self, options):
+        """
+        オプションのパース処理
+        @param options str オプション文字列
+        @return str 引数で受け取ったオプション文字列をそのまま返す
+        """
+        return options
