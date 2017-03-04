@@ -7,10 +7,22 @@ import re
 from AbstractRunner import AbstractRunner
 from bookstore.YahooLogin import YahooLogin
 from bookstore.BookstoreManager import BookstoreManager
+from bookstore.BoundOnSide import BoundOnSide
+
 
 class BookstoreRunner(AbstractRunner):
     """
     ブックストアの実行クラス
+    """
+
+    OPTION_BOUND_ON_LEFT_SIDE = 'L'
+    """
+    左綴じを示すオプション
+    """
+
+    OPTION_BOUND_ON_RIGHT_SIDE = 'R'
+    """
+    右綴じを示すオプション
     """
 
     domainPattern = 'bookstore\.yahoo\.co\.jp'
@@ -35,7 +47,8 @@ class BookstoreRunner(AbstractRunner):
         """
         ブックストアの実行
         """
-        if self.config.bookstore.needsLogin and not BookstoreRunner.isLogin and not self.login():
+        if (self.config.bookstore.needsLogin and
+                not BookstoreRunner.isLogin and not self.login()):
             return
         self.browser.visit(self.url)
         if self.isFull():
@@ -54,10 +67,11 @@ class BookstoreRunner(AbstractRunner):
             print('ページ数の取得に失敗しました')
             return
         destination = input('Output Path > ')
-        manager = BookstoreManager(self.browser, self.config.bookstore, destination)
-        manager.start(url, page)
+        manager = BookstoreManager(
+            self.browser, self.config.bookstore, destination)
+        manager.start(url, page, self.getBoundOnSide())
         return
-                
+
     def login(self):
         """
         ログイン処理を行う
@@ -65,7 +79,10 @@ class BookstoreRunner(AbstractRunner):
         @return ログイン成功時に True を返す
         """
         if self.config.bookstore.username and self.config.bookstore.password:
-            yahoo = YahooLogin(self.browser, self.config.bookstore.username, self.config.bookstore.password)
+            yahoo = YahooLogin(
+                self.browser,
+                self.config.bookstore.username,
+                self.config.bookstore.password)
         else:
             yahoo = YahooLogin(self.browser)
         if yahoo.login():
@@ -93,7 +110,7 @@ class BookstoreRunner(AbstractRunner):
         ブックストアの本の内容を立ち読みできるかどうかを確認する
         @return 立ち読みできる場合は True を返す
         """
-        elements = self.browser.find_by_css('.btn-demo > a,')
+        elements = self.browser.find_by_css('.btn-demo > a')
         return len(elements) != 0
 
     def getDemoPageUrl(self):
@@ -138,3 +155,38 @@ class BookstoreRunner(AbstractRunner):
             return int(data[:-3])
         return 0
 
+    def getBoundOnSide(self):
+        for option in self.options:
+            if option == self.OPTION_BOUND_ON_LEFT_SIDE:
+                return BoundOnSide.LEFT
+            elif option == self.OPTION_BOUND_ON_RIGHT_SIDE:
+                return BoundOnSide.RIGHT
+        return None
+
+    def parseOptions(self, options):
+        """
+        オプションのパース処理
+        パース処理は以下のルールに従って行われる
+        ・スペースを区切り文字とする
+            e.g.) 'aaa bbb' => ['aaa', 'bbb']
+        ・スペースはバックスラッシュを前に付けることででエスケープされる
+            e.g.) 'aaa\ bbb' => ['aaa bbb']
+        ・バックスラッシュはバックスラッシュを前に付けることでエスケープされる
+            e.g.) 'aaa\\ bbb' => ['aaa\', 'bbb']
+        @param options str オプション文字列
+        @return list(str) パースされたオプション情報を持つリスト
+        """
+        result = []
+        if options is not None and options != '':
+            checker = re.compile(r'([^\\]|^)(\\{2})*\\$')
+            data = ''
+            options = options.split(' ')
+            last = len(options) - 1
+            for index in range(last + 1):
+                data = data + options[index]
+                if checker.search(data) and index != last:
+                    data = data[:-1] + ' '
+                elif data != '':
+                    result.append(data.replace('\\\\', '\\'))
+                    data = ''
+        return result

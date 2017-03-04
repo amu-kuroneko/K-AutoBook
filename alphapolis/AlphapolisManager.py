@@ -8,12 +8,13 @@ from os import path
 import os
 import re
 
+
 class AlphapolisManager(object):
     """
     アルファポリスから漫画をダウンロードするクラス
     """
 
-    def __init__(self, directory = './', prefix = ''):
+    def __init__(self, directory='./', prefix=''):
         """
         アルファポリスの操作を行うためのコンストラクタ
         @param browser splinter のブラウザインスタンス
@@ -34,7 +35,8 @@ class AlphapolisManager(object):
         """
         ファイルを出力するディレクトリを設定する
         """
-        self.directory = directory if directory[-1:] == '/' else directory + '/'
+        self.directory = directory if (
+            directory[-1:] == '/') else directory + '/'
         return
 
     def setPrefix(self, prefix):
@@ -58,9 +60,10 @@ class AlphapolisManager(object):
             if response.getcode() != 200:
                 print('画像の取得に失敗しました(%s)' % sources[index])
                 continue
-            with open('%s%s%03d.png' % (self.directory, self.prefix, index), 'wb') as file:
+            with open('%s%s%03d.png' % (
+                    self.directory, self.prefix, index), 'wb') as file:
                 file.write(response.read())
-        self.printProgress(total, isEnd = True)
+        self.printProgress(total, isEnd=True)
         return
 
     def checkDirectory(self, directory):
@@ -76,7 +79,7 @@ class AlphapolisManager(object):
                 raise
         return
 
-    def printProgress(self, total, current = 0, isEnd = False):
+    def printProgress(self, total, current=0, isEnd=False):
         """
         進捗を表示する
         @param total ページの総数
@@ -102,4 +105,3 @@ class AlphapolisManager(object):
             return []
         html = str(response.read())
         return re.findall(r"_pages\.push\(\"(http[^\"]*\.jpg)\"\);", html)
-

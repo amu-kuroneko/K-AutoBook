@@ -1,9 +1,10 @@
 # --- coding: utf-8 ---
 """
-設定クラスモジュール
+画像フォーマットモジュール
 """
 
 from enum import IntEnum
+
 
 class ImageFormat(IntEnum):
     """
@@ -18,4 +19,3 @@ class ImageFormat(IntEnum):
     """
     PNG フォーマット
     """
-

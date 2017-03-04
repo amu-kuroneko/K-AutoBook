@@ -11,6 +11,7 @@ import os
 import io
 import time
 
+
 class YahooLogin(object):
     """
     Yahooアカウントでログインするためのクラス
@@ -21,7 +22,7 @@ class YahooLogin(object):
     ログインページの URL
     """
 
-    def __init__(self, browser, yahooId = None, password = None):
+    def __init__(self, browser, yahooId=None, password=None):
         """
         Yahoo でログインするためのコンストラクタ
         @param browser splinter のブラウザインスタンス
@@ -51,8 +52,10 @@ class YahooLogin(object):
         """
         self.browser.visit(self.LOGIN_URL)
         for count in range(4):
-            yahooId = input('Input Yahoo ID > ') if self.yahooId is None else self.yahooId
-            password = getpass('Input Password > ') if self.password is None else self.password
+            yahooId = input('Input Yahoo ID > ')if (
+                self.yahooId is None) else self.yahooId
+            password = getpass('Input Password > ') if (
+                self.password is None) else self.password
             self.browser.fill('login', yahooId)
             try:
                 self.browser.fill('passwd', password)
@@ -74,7 +77,7 @@ class YahooLogin(object):
                     result = input('Input Captcha > ')
                     self.browser.fill('captchaAnswer', result)
                     self.browser.find_by_css('input[type=image]').first.click()
-                elif self.isLoginPage() :
+                elif self.isLoginPage():
                     break
                 else:
                     break
@@ -107,7 +110,7 @@ class YahooLogin(object):
         result = self.browser.url.startswith(self.LOGIN_URL)
         result = result and self.browser.title == '文字認証を行います。 - Yahoo! JAPAN'
         if result:
-            names= []
+            names = []
             for input in self.browser.find_by_tag('input'):
                 names.append(input['name'])
             checks = [
@@ -128,7 +131,8 @@ class YahooLogin(object):
         画像キャプチャを表示する
         @return 画像の表示に成功した場合に True を返す
         """
-        file = io.BytesIO(request.urlopen(self.browser.find_by_id('captchaV5MultiByteCaptchaImg')['src']).read())
+        file = io.BytesIO(request.urlopen(self.browser.find_by_id(
+            'captchaV5MultiByteCaptchaImg')['src']).read())
         baseImage = Image.open(file)
         baseImage = baseImage.convert('RGBA')
         showImage = Image.new('RGBA', baseImage.size, (0xFF, 0xFF, 0xFF, 0x0))
@@ -140,4 +144,3 @@ class YahooLogin(object):
                     showImage.putpixel((pointX, pointY), pixel)
         showImage.show()
         return True
-

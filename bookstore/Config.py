@@ -4,13 +4,15 @@
 """
 
 from bookstore.ImageFormat import ImageFormat
+from bookstore.BoundOnSide import BoundOnSide
+
 
 class Config(object):
     """
     設定情報を管理するためのクラス
     """
 
-    def __init__(self, data = None):
+    def __init__(self, data=None):
         """
         設定情報を管理するためのコンストラクタ
         @param data 設定情報
@@ -35,6 +37,10 @@ class Config(object):
         """
         ページスクロールのスリープ時間
         """
+        self.boundOnSide = BoundOnSide.LEFT
+        """
+        本の綴じ場所
+        """
         if isinstance(data, dict):
             self.update(data)
         return
@@ -54,6 +60,8 @@ class Config(object):
             self.setImageFormat(data['image_format'])
         if 'sleep_time' in data:
             self.sleepTime = data['sleep_time']
+        if 'bound_on_side' in data:
+            self.setBoundOnSide(data['bound_on_side'])
         return
 
     def setImageFormat(self, format):
@@ -75,3 +83,23 @@ class Config(object):
                 self.imageFormat = ImageFormat.PNG
         return
 
+    def setBoundOnSide(self, boundOnSide):
+        """
+        本の閉じ場所を設定する
+        使用できる場所は bookstore.BoundOnSide.BoundOnSide に記されている
+        @param boundOnSide 本の綴じ場所
+        """
+        if isinstance(boundOnSide, str):
+            boundOnSide = boundOnSide.upper()
+            if boundOnSide in {BoundOnSide.RIGHT.name, str(
+                    int(BoundOnSide.RIGHT))}:
+                self.boundOnSide = BoundOnSide.RIGHT
+            elif boundOnSide in {BoundOnSide.LEFT.name, str(
+                    int(BoundOnSide.LEFT))}:
+                self.boundOnSide = BoundOnSide.LEFT
+        elif isinstance(boundOnSide, int):
+            if boundOnSide == BoundOnSide.RIGHT:
+                self.boundOnSide = BoundOnSide.RIGHT
+            elif boundOnSide == BoundOnSide.LEFT:
+                self.boundOnSide = BoundOnSide.LEFT
+        return
