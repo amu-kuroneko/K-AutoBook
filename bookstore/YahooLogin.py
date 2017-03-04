@@ -2,13 +2,14 @@
 """
 ブックストアを使用するためにYahooアカウントでログインするためのクラスモジュール
 """
-
+from selenium.common.exceptions import InvalidElementStateException
 from getpass import getpass
 from urllib import request
 from PIL import Image
 from os import path
 import os
 import io
+import time
 
 class YahooLogin(object):
     """
@@ -53,8 +54,14 @@ class YahooLogin(object):
             yahooId = input('Input Yahoo ID > ') if self.yahooId is None else self.yahooId
             password = getpass('Input Password > ') if self.password is None else self.password
             self.browser.fill('login', yahooId)
-            self.browser.fill('passwd', password)
-            self.browser.find_by_id('.save').click()
+            try:
+                self.browser.fill('passwd', password)
+                self.browser.find_by_id('.save').click()
+            except InvalidElementStateException:
+                self.browser.find_by_id('btnNext').click()
+                time.sleep(0.5)
+                self.browser.fill('passwd', password)
+                self.browser.find_by_id('btnPwdSubmit').click()
             if self.isLoginError():
                 print('ログインに失敗しました')
                 if self.yahooId is not None and self.password is not None:
@@ -128,8 +135,8 @@ class YahooLogin(object):
         width, height = baseImage.size
         for pointX in range(width):
             for pointY in range(height):
-                pixel = baseImage.getpixel((pointX, pointY)) 
-                if pixel != (0, 0, 0, 0): 
+                pixel = baseImage.getpixel((pointX, pointY))
+                if pixel != (0, 0, 0, 0):
                     showImage.putpixel((pointX, pointY), pixel)
         showImage.show()
         return True
