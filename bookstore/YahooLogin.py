@@ -22,6 +22,11 @@ class YahooLogin(object):
     ログインページの URL
     """
 
+    YAHOO_JAPAN_URL = 'https://www.yahoo.co.jp/'
+    """
+    Yahoo! JAPAN の URL
+    """
+
     def __init__(self, browser, yahooId=None, password=None):
         """
         Yahoo でログインするためのコンストラクタ
@@ -50,21 +55,26 @@ class YahooLogin(object):
         ログインを行う
         @return ログイン成功時に True を返す
         """
-        self.browser.visit(self.LOGIN_URL)
+        print('Loading Yahoo JAPAN! top page')
+        self.browser.visit(self.YAHOO_JAPAN_URL)
+        print('Loading login page')
+        self.browser.click_link_by_text('ログイン')
         for count in range(4):
             yahooId = input('Input Yahoo ID > ')if (
                 self.yahooId is None) else self.yahooId
             password = getpass('Input Password > ') if (
                 self.password is None) else self.password
             self.browser.fill('login', yahooId)
-            try:
-                self.browser.fill('passwd', password)
-                self.browser.find_by_id('.save').click()
-            except InvalidElementStateException:
-                self.browser.find_by_id('btnNext').click()
-                time.sleep(0.5)
-                self.browser.fill('passwd', password)
-                self.browser.find_by_id('btnPwdSubmit').click()
+            print('Confirm Yahoo JAPAN! ID')
+            self.browser.find_by_id('btnNext').click()
+            time.sleep(1)
+            self.browser.execute_script(
+                'element = document.getElementById("passwd");' + \
+                'element.disabled = false;' + \
+                'element.readOnly = false;')
+            self.browser.fill('passwd', password)
+            self.browser.find_by_id('btnSubmit').click()
+            print('Trying login')
             if self.isLoginError():
                 print('ログインに失敗しました')
                 if self.yahooId is not None and self.password is not None:
@@ -85,6 +95,7 @@ class YahooLogin(object):
                     print('画像キャプチャが一致しませんでした')
                     return False
             if not self.isLoginPage():
+                print('Succeeded login')
                 return True
         return False
 

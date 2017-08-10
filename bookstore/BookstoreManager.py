@@ -91,17 +91,24 @@ class BookstoreManager(object):
         if self.isWarning():
             self.agreeWarning()
             time.sleep(2)
+        if self.isShowingDescription():
+            self.closeDescription()
         self.checkDirectory(self.IMAGE_DIRECTORY)
         self.checkDirectory(self.directory)
         total = self.getDisplayPage(number)
         extension = self.getExtension()
         format = self.getSaveFormat()
         sleepTime = self.config.sleepTime if self.config is not None else 0.5
-        for index in range(total):
-            self.previous()
-            time.sleep(0.02)
+        self.moveFirstPage()
+        time.sleep(sleepTime)
+        if self.isLastPage():
+            self.moveLastPage()
+            time.sleep(sleepTime)
         for index in range(total):
             self.printProgress(total, index)
+            if self.isLastPage():
+                print("\nLast page.")
+                return
             temporaryPath = self.IMAGE_DIRECTORY + 'K-AutoBook' + extension
             self.browser.driver.save_screenshot(temporaryPath)
             self.next()
@@ -174,8 +181,9 @@ class BookstoreManager(object):
     def next(self):
         """
         次のページに進む
+        スペースで次のページにすすめるのでスペースキー固定
         """
-        self.pressKey(self.nextKey)
+        self.pressKey(Keys.SPACE)
         return
 
     def previous(self):
@@ -185,12 +193,37 @@ class BookstoreManager(object):
         self.pressKey(self.previousKey)
         return
 
+    def moveFirstPage(self):
+        """
+        先頭ページに移動
+        """
+        self.sendKeyOnShift(self.previousKey)
+
+    def moveLastPage(self):
+        """
+        最後のページに移動
+        """
+        self.sendKeyOnShift(self.nextKey)
+
     def pressKey(self, key):
         """
         指定したキーを押す
         """
         ActionChains(self.browser.driver).key_down(key).perform()
         return
+
+    def sendKey(self, keys):
+        """
+        指定した文字を送信する
+        """
+        ActionChains(self.browser.driver).send_keys(keys).perform()
+        return
+
+    def sendKeyOnShift(self, keys):
+        """
+        指定した文字を Shift キーを押した状態で送信する
+        """
+        ActionChains(self.browser.driver).key_down(Keys.SHIFT).send_keys(keys).key_up(Keys.SHIFT).perform()
 
     def isWarning(self):
         """
@@ -201,6 +234,18 @@ class BookstoreManager(object):
             '.document.getElementById("warningPageFrame")'
         return self.browser.evaluate_script(script) is not None
 
+    def isLastPage(self):
+        """
+        最後のページかどうかを確認する
+        @return 最後のページの場合に True を返す
+        """
+        if self.browser.find_by_id('binb') != []:
+            with self.browser.get_iframe('binb') as binb_iframe:
+                for iframe in binb_iframe.find_by_tag('iframe'):
+                    if iframe['id'] == 'lastPageFrame':
+                        return True
+        return False
+
     def agreeWarning(self):
         """
         警告文に同意してページを表示する
@@ -209,6 +254,22 @@ class BookstoreManager(object):
             '.document.getElementById("warningPageFrame").contentWindow' + \
             '.document.getElementsByClassName("btnOK")[0].click()'
         self.browser.execute_script(script)
+
+    def isShowingDescription(self):
+        """
+        説明モーダルが表示されているかを確認する
+        @return 説明モーダルが表示されている場合に True を返す
+        """
+        script = 'document.getElementById("binb").contentWindow' + \
+            '.document.getElementById("menu_tips_div").style.visibility'
+        return self.browser.evaluate_script(script) != 'hidden'
+
+    def closeDescription(self):
+        """
+        説明モーダルを閉じる
+        """
+        self.sendKeys('-')
+        return
 
     def getExtension(self):
         """
