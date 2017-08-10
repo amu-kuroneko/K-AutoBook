@@ -19,7 +19,8 @@ class AlphapolisRunner(AbstractRunner):
     """
 
     patterns = [
-        'manga\/viewManga\/(\?.*no=)?\d+'
+        'manga\/viewManga\/(\?.*no=)?\d+',
+        'manga\/official\/\d+/\d+'
     ]
     """
     サポートするアルファポリスのパスの正規表現のパターンのリスト
