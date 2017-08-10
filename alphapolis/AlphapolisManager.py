@@ -104,4 +104,13 @@ class AlphapolisManager(object):
             print("漫画データの取得に失敗しました")
             return []
         html = str(response.read())
-        return re.findall(r"_pages\.push\(\"(http[^\"]*\.jpg)\"\);", html)
+        matches = re.findall(r"var\s+_base\s*=\s*\"([^\"]+)\";", html)
+        if len(matches) == 0:
+            print("漫画情報のURLの取得に失敗しました")
+            return []
+        base = matches[0]
+        matches = re.findall(r"_pages.push\(\"(\d+\.jpg)\"\);", html)
+        if len(matches) == 0:
+            print("漫画のページ情報の取得に失敗しました")
+            return []
+        return [base + page for page in matches]
