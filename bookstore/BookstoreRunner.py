@@ -4,6 +4,8 @@
 """
 
 import re
+from os import path
+from datetime import datetime
 from AbstractRunner import AbstractRunner
 from bookstore.YahooLogin import YahooLogin
 from bookstore.BookstoreManager import BookstoreManager
@@ -47,9 +49,17 @@ class BookstoreRunner(AbstractRunner):
         """
         ブックストアの実行
         """
-        if (self.config.bookstore.needsLogin and
-                not BookstoreRunner.isLogin and not self.login()):
+        try:
+            if (self.config.bookstore.needsLogin and
+                    not BookstoreRunner.isLogin and not self.login()):
+                return
+        except:
+            self.browser.driver.save_screenshot(
+                path.join(self.config.logDirectory,
+                    'login_error_%s.png' % datetime.now().strftime('%s')))
+            print('ログイン時にエラーが発生しました')
             return
+        print('Loading page of inputed url (%s)' % self.url)
         self.browser.visit(self.url)
         if self.isFull():
             url = self.getFullPageUrl()
