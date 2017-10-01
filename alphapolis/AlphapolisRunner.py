@@ -19,6 +19,7 @@ class AlphapolisRunner(AbstractRunner):
     """
 
     patterns = [
+        'manga\/official\/\d+',
         'manga\/viewManga\/(\?.*no=)?\d+',
         'manga\/official\/\d+/\d+'
     ]

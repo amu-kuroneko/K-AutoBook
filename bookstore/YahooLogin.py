@@ -27,6 +27,11 @@ class YahooLogin(object):
     Yahoo! JAPAN の URL
     """
 
+    ONE_TIME_PASSWORD_URL = 'https://protect.login.yahoo.co.jp/otp/auth'
+    """
+    ログイン時にワンタイムパスワードを求めるページの URL
+    """
+
     def __init__(self, browser, yahooId=None, password=None):
         """
         Yahoo でログインするためのコンストラクタ
@@ -60,10 +65,11 @@ class YahooLogin(object):
         print('Loading login page')
         self.browser.click_link_by_text('ログイン')
         for count in range(4):
-            yahooId = input('Input Yahoo ID > ')if (
+            yahooId = input('Input Yahoo ID > ') if (
                 self.yahooId is None) else self.yahooId
             password = getpass('Input Password > ') if (
                 self.password is None) else self.password
+            print('Trying login: ' + yahooId)
             self.browser.fill('login', yahooId)
             print('Confirm Yahoo JAPAN! ID')
             self.browser.find_by_id('btnNext').click()
@@ -95,6 +101,18 @@ class YahooLogin(object):
                     print('画像キャプチャが一致しませんでした')
                     return False
             if not self.isLoginPage():
+                oneTimePassword = None
+                isSucceededLogin = False
+                for count in range(4):
+                    if self.isRequiredOneTimePassword():
+                        if oneTimePassword is not None:
+                            print('Invalid one time password')
+                        oneTimePassword = input('Input one time password > ')
+                        self.browser.fill('verify_code', oneTimePassword)
+                        self.browser.find_by_css('[type=submit]')[0].click()
+                    else:
+                        isSucceededLogin = True
+                        break
                 print('Succeeded login')
                 return True
         return False
@@ -155,3 +173,9 @@ class YahooLogin(object):
                     showImage.putpixel((pointX, pointY), pixel)
         showImage.show()
         return True
+
+    def isRequiredOneTimePassword(self):
+        """
+        ワンタイムパスワードを求められているかを確認する
+        """
+        return self.browser.url.startswith(self.ONE_TIME_PASSWORD_URL)
