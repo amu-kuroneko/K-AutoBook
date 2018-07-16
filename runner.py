@@ -12,7 +12,7 @@ class AbstractRunner(metaclass=ABCMeta):
     実行するための抽象クラス
     """
 
-    domainPattern = ''
+    domain_pattern = ''
     """
     サポートするドメインの正規表現のパターン
     """
@@ -28,15 +28,15 @@ class AbstractRunner(metaclass=ABCMeta):
     """
 
     @classmethod
-    def initializeChecker(cls):
+    def _initialize_checker(cls):
         """
         サポートする URL かどうかの判定機の初期設定を行う
         """
         cls.checkers = []
-        for pattern in cls.patterns:
+        for _pattern in cls.patterns:
             cls.checkers.append(
                 re.compile(
-                    r'https?:\/\/' + cls.domainPattern + '\/' + pattern))
+                    r'https?:\/\/' + cls.domain_pattern + '\/' + _pattern))
         return
 
     @classmethod
@@ -47,9 +47,9 @@ class AbstractRunner(metaclass=ABCMeta):
         @return bool サポートしている場合に True を返す
         """
         if cls.checkers is None:
-            cls.initializeChecker()
-        for checker in cls.checkers:
-            if checker.match(url):
+            cls._initialize_checker()
+        for _checker in cls.checkers:
+            if _checker.match(url):
                 return True
         return False
 
@@ -77,7 +77,7 @@ class AbstractRunner(metaclass=ABCMeta):
         設定
         """
 
-        self.options = self.parseOptions(options)
+        self.options = self.parse_options(options)
         """
         オプションとして指定する文字列
         オプションのパース方法は継承先に依存する
@@ -91,7 +91,7 @@ class AbstractRunner(metaclass=ABCMeta):
         """
         pass
 
-    def parseOptions(self, options):
+    def parse_options(self, options):
         """
         オプションのパース処理
         @param options str オプション文字列

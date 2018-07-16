@@ -3,7 +3,7 @@
 設定クラスモジュール
 """
 
-import bookstore.Config
+from bookstore.config import config as BookstoreConfig
 
 
 class Config(object):
@@ -20,23 +20,24 @@ class Config(object):
         """
         開くブラウザのドライバ
         """
-        self.userAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) ' + \
-            'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.95 ' + \
-            'Safari/537.36'
+        self.user_agent = (
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) ' +
+            'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.95 ' +
+            'Safari/537.36')
         """
         User Agent
         """
-        self.windowSize = {'width': 2880, 'height': 1800}
+        self.window_size = {'width': 2880, 'height': 1800}
         """
         ウィンドウサイズ
         width: 横幅
         height: 高さ
         """
-        self.logDirectory = '/tmp/k_auto_book/'
+        self.log_directory = '/tmp/k_auto_book/'
         """
         ログを出力するディレクトリパス
         """
-        self.bookstore = bookstore.Config.Config()
+        self.bookstore = BookstoreConfig()
         """
         Bookstore の設定情報
         """
@@ -52,14 +53,14 @@ class Config(object):
         if 'driver' in data:
             self.driver = data['driver']
         if 'user_agent' in data:
-            self.userAgent = data['user_agent']
+            self.user_agent = data['user_agent']
         if 'window_size' in data:
             if 'width' in data['window_size']:
-                self.windowSize['width'] = int(data['window_size']['width'])
+                self.window_size['width'] = int(data['window_size']['width'])
             if 'heigth' in data['window_size']:
-                self.windowSize['height'] = int(data['window_size']['height'])
+                self.window_size['height'] = int(data['window_size']['height'])
         if 'log_directory' in data:
-            self.logDirectory = data['log_directory']
+            self.log_directory = data['log_directory']
         if 'bookstore' in data:
             self.bookstore.update(data['bookstore'])
         return
