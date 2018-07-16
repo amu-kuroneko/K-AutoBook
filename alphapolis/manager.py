@@ -9,7 +9,7 @@ import os
 import re
 
 
-class AlphapolisManager(object):
+class Manager(object):
     """
     アルファポリスから漫画をダウンロードするクラス
     """
@@ -17,7 +17,8 @@ class AlphapolisManager(object):
     def __init__(self, directory='./', prefix=''):
         """
         アルファポリスの操作を行うためのコンストラクタ
-        @param browser splinter のブラウザインスタンス
+        @param directory 出力するファイル群を置くディレクトリ
+        @param prfix 出力するファイル名のプレフィックス
         """
         self.directory = None
         """
@@ -27,11 +28,11 @@ class AlphapolisManager(object):
         """
         出力するファイルのプレフィックス
         """
-        self.setDirectory(directory)
-        self.setPrefix(prefix)
+        self._set_directory(directory)
+        self._set_prefix(prefix)
         return
 
-    def setDirectory(self, directory):
+    def _set_directory(self, directory):
         """
         ファイルを出力するディレクトリを設定する
         """
@@ -39,7 +40,7 @@ class AlphapolisManager(object):
             directory[-1:] == '/') else directory + '/'
         return
 
-    def setPrefix(self, prefix):
+    def _set_prefix(self, prefix):
         """
         出力ファイルのプレフィックス
         """
@@ -51,22 +52,22 @@ class AlphapolisManager(object):
         ページの自動自動ダウンロードを開始する
         @param url アルフォポリスのコンテンツの URL
         """
-        self.checkDirectory(self.directory)
-        sources = self.getImageUrls(url)
-        total = len(sources)
-        for index in range(total):
-            self.printProgress(total, index)
-            response = request.urlopen(sources[index])
-            if response.getcode() != 200:
-                print('画像の取得に失敗しました(%s)' % sources[index])
+        self._check_directory(self.directory)
+        _sources = self._get_image_urls(url)
+        _total = len(_sources)
+        for _index in range(_total):
+            self._print_progress(_total, _index)
+            _response = request.urlopen(_sources[_index])
+            if _response.getcode() != 200:
+                print('画像の取得に失敗しました(%s)' % _sources[_index])
                 continue
             with open('%s%s%03d.png' % (
-                    self.directory, self.prefix, index), 'wb') as file:
-                file.write(response.read())
-        self.printProgress(total, isEnd=True)
+                    self.directory, self.prefix, _index), 'wb') as file:
+                file.write(_response.read())
+        self._print_progress(_total, is_end=True)
         return
 
-    def checkDirectory(self, directory):
+    def _check_directory(self, directory):
         """
         ディレクトリの存在を確認して，ない場合はそのディレクトリを作成する
         @param directory 確認するディレクトリのパス
@@ -79,38 +80,38 @@ class AlphapolisManager(object):
                 raise
         return
 
-    def printProgress(self, total, current=0, isEnd=False):
+    def _print_progress(self, total, current=0, is_end=False):
         """
         進捗を表示する
         @param total ページの総数
         @param current 現在のページ数
         @param 最後のページの場合は True を指定する
         """
-        if isEnd:
+        if is_end:
             print('%d/%d' % (total, total))
         else:
             print('%d/%d' % (current, total), end='')
             print('\x1B[10000D', end='', flush=True)
         return
 
-    def getImageUrls(self, url):
+    def _get_image_urls(self, url):
         """
         漫画画像の URL を取得する
         @param url アルファボリスで漫画を表示しているページの URL
         @return ページの URL のリスト
         """
-        response = request.urlopen(url)
-        if response.getcode() != 200:
+        _response = request.urlopen(url)
+        if _response.getcode() != 200:
             print("漫画データの取得に失敗しました")
             return []
-        html = str(response.read())
-        matches = re.findall(r"var\s+_base\s*=\s*\"([^\"]+)\";", html)
-        if len(matches) == 0:
+        _html = str(_response.read())
+        _matches = re.findall(r"var\s+_base\s*=\s*\"([^\"]+)\";", _html)
+        if len(_matches) == 0:
             print("漫画情報のURLの取得に失敗しました")
             return []
-        base = matches[0]
-        matches = re.findall(r"_pages.push\(\"(\d+\.jpg)\"\);", html)
-        if len(matches) == 0:
+        _base = _matches[0]
+        _matches = re.findall(r"_pages.push\(\"(\d+\.jpg)\"\);", _html)
+        if len(_matches) == 0:
             print("漫画のページ情報の取得に失敗しました")
             return []
-        return [base + page for page in matches]
+        return [_base + _page for _page in _matches]

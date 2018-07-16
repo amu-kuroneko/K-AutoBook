@@ -4,16 +4,16 @@
 """
 
 import re
-from AbstractRunner import AbstractRunner
-from alphapolis.AlphapolisManager import AlphapolisManager
+from runner import AbstractRunner
+from alphapolis.manager import Manager
 
 
-class AlphapolisRunner(AbstractRunner):
+class Runner(AbstractRunner):
     """
     アルファポリスの実行クラス
     """
 
-    domainPattern = 'www\.alphapolis\.co\.jp'
+    domain_pattern = 'www\.alphapolis\.co\.jp'
     """
     サポートするドメイン
     """
@@ -31,7 +31,7 @@ class AlphapolisRunner(AbstractRunner):
         """
         アルファポリスの実行
         """
-        destination = input('Output Path > ')
-        manager = AlphapolisManager(destination)
-        manager.start(self.url)
+        _destination = input('Output Path > ')
+        _manager = Manager(_destination)
+        _manager.start(self.url)
         return

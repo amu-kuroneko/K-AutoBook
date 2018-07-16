@@ -1,10 +1,38 @@
 # --- coding: utf-8 ---
 """
-設定クラスモジュール
+ブックストアの設定モジュール
 """
 
-from bookstore.ImageFormat import ImageFormat
-from bookstore.BoundOnSide import BoundOnSide
+from enum import IntEnum
+
+
+class BoundOnSide(IntEnum):
+    """
+    本の綴じ場所情報
+    """
+    RIGHT = 1
+    """
+    右綴じ
+    """
+    LEFT = 2
+    """
+    左綴じ
+    """
+
+
+class ImageFormat(IntEnum):
+    """
+    書き出す画像のフォーマット
+    """
+
+    JPEG = 1
+    """
+    JPEG フォーマット
+    """
+    PNG = 2
+    """
+    PNG フォーマット
+    """
 
 
 class Config(object):
@@ -17,7 +45,7 @@ class Config(object):
         設定情報を管理するためのコンストラクタ
         @param data 設定情報
         """
-        self.needsLogin = False
+        self.needs_login = False
         """
         Yahoo! JAPAN にログインする必要があるかどうか
         """
@@ -29,15 +57,15 @@ class Config(object):
         """
         Yahoo! JAPAN ID のパスワード
         """
-        self.imageFormat = ImageFormat.JPEG
+        self.image_format = ImageFormat.JPEG
         """
         書き出す画像フォーマット
         """
-        self.sleepTime = 0.5
+        self.sleep_time = 0.5
         """
         ページスクロールのスリープ時間
         """
-        self.boundOnSide = BoundOnSide.LEFT
+        self.bound_on_side = BoundOnSide.LEFT
         """
         本の綴じ場所
         """
@@ -51,55 +79,55 @@ class Config(object):
         @param data 更新するデータ
         """
         if 'needs_login' in data:
-            self.needsLogin = data['needs_login']
+            self.needs_login = data['needs_login']
         if 'username' in data:
             self.username = data['username']
         if 'password' in data:
             self.password = data['password']
         if 'image_format' in data:
-            self.setImageFormat(data['image_format'])
+            self._set_image_format(data['image_format'])
         if 'sleep_time' in data:
-            self.sleepTime = data['sleep_time']
+            self.sleep_time = data['sleep_time']
         if 'bound_on_side' in data:
-            self.setBoundOnSide(data['bound_on_side'])
+            self._set_bound_on_size(data['bound_on_side'])
         return
 
-    def setImageFormat(self, format):
+    def _set_image_format(self, format):
         """
         書き出す画像のフォーマットを設定する
         使用できるフォーマットは bookstore.ImageFormat.ImageFormat に記されている
         @param format 画像のフォーマット
         """
         if isinstance(format, str):
-            format = format.upper()
-            if format in {ImageFormat.JPEG.name, str(int(ImageFormat.JPEG))}:
-                self.imageFormat = ImageFormat.JPEG
-            elif format in {ImageFormat.PNG.name, str(int(ImageFormat.PNG))}:
-                self.imageFormat = ImageFormat.PNG
+            _format = format.upper()
+            if _format in {ImageFormat.JPEG.name, str(int(ImageFormat.JPEG))}:
+                self.image_format = ImageFormat.JPEG
+            elif _format in {ImageFormat.PNG.name, str(int(ImageFormat.PNG))}:
+                self.image_format = ImageFormat.PNG
         elif isinstance(format, int):
             if format == ImageFormat.JPEG:
-                self.imageFormat = ImageFormat.JPEG
+                self.image_format = ImageFormat.JPEG
             elif format == ImageFormat.PNG:
-                self.imageFormat = ImageFormat.PNG
+                self.image_format = ImageFormat.PNG
         return
 
-    def setBoundOnSide(self, boundOnSide):
+    def _set_bound_on_size(self, bound_on_side):
         """
         本の閉じ場所を設定する
         使用できる場所は bookstore.BoundOnSide.BoundOnSide に記されている
-        @param boundOnSide 本の綴じ場所
+        @param bound_on_side 本の綴じ場所
         """
-        if isinstance(boundOnSide, str):
-            boundOnSide = boundOnSide.upper()
-            if boundOnSide in {BoundOnSide.RIGHT.name, str(
+        if isinstance(bound_on_side, str):
+            _bound_on_side = bound_on_side.upper()
+            if _bound_on_side in {BoundOnSide.RIGHT.name, str(
                     int(BoundOnSide.RIGHT))}:
-                self.boundOnSide = BoundOnSide.RIGHT
-            elif boundOnSide in {BoundOnSide.LEFT.name, str(
+                self.bound_on_side = BoundOnSide.RIGHT
+            elif _bound_on_side in {BoundOnSide.LEFT.name, str(
                     int(BoundOnSide.LEFT))}:
-                self.boundOnSide = BoundOnSide.LEFT
-        elif isinstance(boundOnSide, int):
-            if boundOnSide == BoundOnSide.RIGHT:
-                self.boundOnSide = BoundOnSide.RIGHT
-            elif boundOnSide == BoundOnSide.LEFT:
-                self.boundOnSide = BoundOnSide.LEFT
+                self.bound_on_side = BoundOnSide.LEFT
+        elif isinstance(bound_on_side, int):
+            if bound_on_side == BoundOnSide.RIGHT:
+                self.bound_on_side = BoundOnSide.RIGHT
+            elif bound_on_side == BoundOnSide.LEFT:
+                self.bound_on_side = BoundOnSide.LEFT
         return
