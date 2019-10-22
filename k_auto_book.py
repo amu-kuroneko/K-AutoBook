@@ -7,7 +7,7 @@ import re
 from os import path
 from splinter import Browser
 from config import Config
-from bookstore.runner import Runner as Bookstore
+from ebookjapan.runner import Runner as Ebookjapan
 from alphapolis.runner import Runner as Alphapolis
 
 
@@ -30,11 +30,15 @@ def _make_directory(directory):
 
 def _initialize_browser(config):
     log_name = path.join(config.log_directory, 'ghostdriver.log')
-    browser = Browser(
-        config.driver, user_agent=config.user_agent, service_log_path=log_name)
-    browser.driver.set_window_size(
-        config.window_size['width'], config.window_size['height'])
-    return browser
+    _browser = Browser(
+        config.driver, headless=True, user_agent=config.user_agent, service_log_path=log_name)
+    _width = config.window_size['width']
+    _height = config.window_size['height']
+    if config.driver == 'chrome':
+        _width = _width / 2
+        _height = _height / 2
+    _browser.driver.set_window_size(_width, _height)
+    return _browser
 
 
 def _main():
@@ -58,8 +62,8 @@ def _main():
         elif _input_data == 'exit':
             print('Bye.')
             break
-        elif Bookstore.check(_url):
-            _runner = Bookstore(_browser, _input_data, _config, _options)
+        elif Ebookjapan.check(_url):
+            _runner = Ebookjapan(_browser, _input_data, _config, _options)
         elif Alphapolis.check(_url):
             _runner = Alphapolis(_browser, _input_data, _config, _options)
         else:

@@ -1,12 +1,12 @@
 {
-    "driver": "phantomjs",
+    "driver": "chrome",
     "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.95 Safari/537.36",
     "window_size": {
         "width": 2880,
         "height": 1800
     },
     "log_directory": "/tmp/k_auto_book/",
-    "bookstore": {
+    "ebookjapan": {
         "needs_login": false,
         "username": "",
         "password": "",

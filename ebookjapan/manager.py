@@ -1,20 +1,21 @@
 # --- coding: utf-8 ---
 """
-ブックストアの操作を行うためのクラスモジュール
+ebookjapanの操作を行うためのクラスモジュール
 """
 
+from datetime import datetime
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 from PIL import Image
 from os import path
-from bookstore.config import Config, ImageFormat, BoundOnSide
+from ebookjapan.config import Config, ImageFormat, BoundOnSide
 import os
 import time
 
 
 class Manager(object):
     """
-    ブックストアの操作を行うためのクラス
+    ebookjapanの操作を行うためのクラス
     """
 
     IMAGE_DIRECTORY = '/tmp/k/'
@@ -27,9 +28,19 @@ class Manager(object):
     画像の色の判定を行う Y 座標
     """
 
+    BACKGEROUND_COLOR = '#FEFFFD'
+    """
+    トリミングを容易にするための背景色
+    """
+
+    MAX_LOADING_TIME = 5
+    """
+    初回読み込み時の最大待ち時間
+    """
+
     def __init__(self, browser, config=None, directory='./', prefix=''):
         """
-        ブックストアの操作を行うためのコンストラクタ
+        ebookjapanの操作を行うためのコンストラクタ
         @param browser splinter のブラウザインスタンス
         """
         self.browser = browser
@@ -38,7 +49,7 @@ class Manager(object):
         """
         self.config = config if isinstance(config, Config) else None
         """
-        Bookstore の設定情報
+        ebookjapan の設定情報
         """
         self.directory = None
         """
@@ -56,6 +67,11 @@ class Manager(object):
         """
         前のページに戻るためのキー
         """
+        self.current_page_element = None
+        """
+        現在表示されているページのページ番号が表示されるエレメント
+        """
+
         self._set_directory(directory)
         self._set_prefix(prefix)
         self._set_bound_of_side(None)
@@ -92,46 +108,79 @@ class Manager(object):
         self.prefix = prefix
         return
 
-    def start(self, url, number, bound_on_side):
+    def start(self):
         """
         ページの自動スクリーンショットを開始する
-        @param url ブックストアのコンテンツの URL
-        @param number そのコンテンツの総ページ数
-        @param bound_on_side ページの綴じ場所
+        @return エラーが合った場合にエラーメッセージを、成功時に True を返す
         """
-        self._set_bound_of_side(bound_on_side)
-        self.browser.visit(url)
         time.sleep(2)
-        if self._is_warning():
-            self._agree_warning()
-            time.sleep(2)
-        if self._is_showing_description():
-            self._close_description()
-        self._check_directory(self.IMAGE_DIRECTORY)
+        _total = self._get_total_page()
+        if _total is None:
+            return '全ページ数の取得に失敗しました'
+        self.current_page_element = self._get_current_page_element()
+        if self.current_page_element is None:
+            return '現在のページ情報の取得に失敗しました'
+        self._change_background_color()
+        self._check_directory(Manager.IMAGE_DIRECTORY)
         self._check_directory(self.directory)
-        _total = self._get_display_page(number)
+        self._set_bound_of_side(self._get_bound_on_side())
         _extension = self._get_extension()
         _format = self._get_save_format()
         _sleep_time = (
             self.config.sleep_time if self.config is not None else 0.5)
         self._move_first_page()
         time.sleep(_sleep_time)
-        if self._is_last_page():
-            self._move_last_page()
-            time.sleep(_sleep_time)
-        for _index in range(_total):
-            self._print_progress(_total, _index)
-            if self._is_last_page():
-                print("\nLast page.")
-                return
-            _temporary_page = self.IMAGE_DIRECTORY + 'K-AutoBook' + _extension
+        _current = 1
+        _count = 0
+        while True:
+            self._print_progress(_total, _current)
+            _temporary_page = Manager.IMAGE_DIRECTORY + 'K-AutoBook.png'
             self.browser.driver.save_screenshot(_temporary_page)
+            _name = '%s%s%03d%s' % (
+                self.directory, self.prefix, _count, _extension)
+            if _current == _total:
+                self._triming(_temporary_page, _name, _format)
+                break
             self._next()
-            self._triming(_temporary_page, '%s%s%03d%s' % (
-                self.directory, self.prefix, _index, _extension), _format)
+            self._triming(_temporary_page, _name, _format)
             time.sleep(_sleep_time)
+            _current = self._get_current_page()
+            _count = _count + 1
         self._print_progress(_total, is_end=True)
-        return
+        return True
+
+    def _get_total_page(self):
+        """
+        全ページ数を取得する
+        最初にフッタの出し入れをする
+        @return 取得成功時に全ページ数を、失敗時に None を返す
+        """
+        _elements = self.browser.find_by_css(
+            '.footer__page-output > .total-pages')
+        if len(_elements) == 0:
+            return None
+        for _ in range(Manager.MAX_LOADING_TIME):
+            if _elements.first.html != '0':
+                return int(_elements.first.html)
+            time.sleep(1)
+        return None
+
+    def _get_current_page_element(self):
+        """
+        現在表示されているページのページ数が表示されているエレメントを取得する
+        @return ページ数が表示されているエレメントがある場合はそのエレメントを、ない場合は None を返す
+        """
+        _elements = self.browser.find_by_css('.footer__page-output > output')
+        if len(_elements) != 0:
+            return _elements.first
+        return None
+
+    def _get_current_page(self):
+        """
+        現在のページを取得する
+        @return 現在表示されているページ
+        """
+        return int(self.current_page_element.html[:-2])
 
     def _check_directory(self, directory):
         """
@@ -145,14 +194,6 @@ class Manager(object):
                 print("ディレクトリの作成に失敗しました({0})".format(directory))
                 raise
         return
-
-    def _get_display_page(self, page):
-        """
-        コンテンツの総ページ数から表示されるページ数を取得する
-        @param page コンテンツの総ページ数
-        @return 表示されるページ数
-        """
-        return int(page / 2) + 1
 
     def _print_progress(self, total, current=0, is_end=False):
         """
@@ -184,15 +225,18 @@ class Manager(object):
             _bases.add(_image.getpixel((0, _point_y)))
             _bases.add(_image.getpixel((_width - 1, _point_y)))
         for _point_x in range(_width):
-            _pixel = _image.getpixel((_point_x, self.CHECK_Y))
-            if not _pixel in _bases:
+            _pixel = _image.getpixel((_point_x, Manager.CHECK_Y))
+            if _pixel not in _bases:
                 _start_x = _point_x
                 break
         for _point_x in range(_width)[::-1]:
-            _pixel = _image.getpixel((_point_x, self.CHECK_Y))
-            if not _pixel in _bases:
+            _pixel = _image.getpixel((_point_x, Manager.CHECK_Y))
+            if _pixel not in _bases:
                 _end_x = _point_x + 1
                 break
+        if _start_x != 0:
+            _start_x = _start_x + 58
+            _end_x = _end_x - 58
         _image = _image.crop((_start_x, 0, _end_x, _height))
         if self.config is not None and (
                 self.config.image_format == ImageFormat.JPEG):
@@ -205,7 +249,7 @@ class Manager(object):
         次のページに進む
         スペースで次のページにすすめるのでスペースキー固定
         """
-        self._press_key(Keys.SPACE)
+        self._press_key(self.next_key)
         return
 
     def _previous(self):
@@ -219,13 +263,9 @@ class Manager(object):
         """
         先頭ページに移動
         """
-        self._send_key_on_shift(self.previous_key)
-
-    def _move_last_page(self):
-        """
-        最後のページに移動
-        """
-        self._send_key_on_shift(self.next_key)
+        while self._get_current_page() != 1:
+            self._previous()
+        return
 
     def _press_key(self, key):
         """
@@ -234,73 +274,15 @@ class Manager(object):
         ActionChains(self.browser.driver).key_down(key).perform()
         return
 
-    def _send_key(self, keys):
+    def _change_background_color(self):
         """
-        指定した文字を送信する
+        表示されている漫画ページの背景色を変更する
         """
-        ActionChains(self.browser.driver).send_keys(keys).perform()
-        return
 
-    def _send_key_on_shift(self, keys):
-        """
-        指定した文字を Shift キーを押した状態で送信する
-        """
-        _chain = ActionChains(self.browser.driver)
-        _chain = _chain.key_down(Keys.SHIFT)
-        _chain = _chain.send_keys(keys)
-        _chain = _chain.key_up(Keys.SHIFT)
-        _chain.perform()
-
-    def _is_warning(self):
-        """
-        警告文が表示されているかを確認する
-        @return 警告文が表示されている場合に True を返す
-        """
-        _script = 'document.getElementById("binb").contentWindow' + \
-            '.document.getElementById("warningPageFrame")'
-        try:
-            return self.browser.evaluate_script(_script) is not None
-        except:
-            # 正常に script 出来ない場合は警告文が表示されていないと解釈
-            return False
-
-    def _is_last_page(self):
-        """
-        最後のページかどうかを確認する
-        @return 最後のページの場合に True を返す
-        """
-        return self.browser.url.startswith(
-            'https://bookstore.yahoo.co.jp/viewerLastPage')
-
-    def _agree_warning(self):
-        """
-        警告文に同意してページを表示する
-        """
-        _script = 'document.getElementById("binb").contentWindow' + \
-            '.document.getElementById("warningPageFrame").contentWindow' + \
-            '.document.getElementsByClassName("btnOK")[0].click()'
-        self.browser.execute_script(_script)
-
-    def _is_showing_description(self):
-        """
-        説明モーダルが表示されているかを確認する
-        @return 説明モーダルが表示されている場合に True を返す
-        """
-        _script = '''(function(v) {
-            if (!(v.b = document.getElementById('binb'))) return '';
-            if (!(v.c = v.b.contentWindow)) return '';
-            if (!(v.d = v.c.document)) return '';
-            if (!(v.m = v.d.getElementById('menu_tips_div'))) return '';
-            if (!(v.s = v.m.style)) return '';
-            return v.s.visibility;
-        })({});'''
-        return self.browser.evaluate_script(_script) != 'hidden'
-
-    def _close_description(self):
-        """
-        説明モーダルを閉じる
-        """
-        self._send_key('-')
+        _script = (
+            "document.body.style.backgroundColor = '%s'"
+            % Manager.BACKGEROUND_COLOR)
+        self.browser.evaluate_script(_script)
         return
 
     def _get_extension(self):
@@ -326,6 +308,14 @@ class Manager(object):
             elif self.config.image_format == ImageFormat.PNG:
                 return 'png'
         return 'jpeg'
+
+    def _get_bound_on_side(self):
+        _current = self._get_current_page()
+        self._press_key(Keys.ARROW_LEFT)
+        if _current < self._get_current_page():
+            return BoundOnSide.RIGHT
+        else:
+            return BoundOnSide.LEFT
 
     def _set_bound_of_side(self, bound_on_side):
         """
