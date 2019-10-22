@@ -1,6 +1,6 @@
 # --- coding: utf-8 ---
 """
-ブックストアを使用するためにYahooアカウントでログインするためのクラスモジュール
+ebookjapanを使用するためにYahooアカウントでログインするためのクラスモジュール
 """
 from selenium.common.exceptions import InvalidElementStateException
 from getpass import getpass
@@ -63,7 +63,7 @@ class YahooLogin(object):
         print('Loading Yahoo JAPAN! top page')
         self.browser.visit(self.YAHOO_JAPAN_URL)
         print('Loading login page')
-        self.browser.click_link_by_text('ログイン')
+        self.browser.click_link_by_partial_text('ログイン')
         for _try_count in range(4):
             _yahoo_id = input('Input Yahoo ID > ') if (
                 self.yahoo_id is None) else self.yahoo_id

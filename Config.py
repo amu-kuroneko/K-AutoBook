@@ -3,7 +3,7 @@
 設定クラスモジュール
 """
 
-from bookstore.config import config as BookstoreConfig
+from ebookjapan.config import Config as EbookjapanConfig
 
 
 class Config(object):
@@ -37,9 +37,9 @@ class Config(object):
         """
         ログを出力するディレクトリパス
         """
-        self.bookstore = BookstoreConfig()
+        self.ebookjapan = EbookjapanConfig()
         """
-        Bookstore の設定情報
+        ebookjapan の設定情報
         """
         if isinstance(data, dict):
             self.update(data)
@@ -57,10 +57,10 @@ class Config(object):
         if 'window_size' in data:
             if 'width' in data['window_size']:
                 self.window_size['width'] = int(data['window_size']['width'])
-            if 'heigth' in data['window_size']:
+            if 'height' in data['window_size']:
                 self.window_size['height'] = int(data['window_size']['height'])
         if 'log_directory' in data:
             self.log_directory = data['log_directory']
-        if 'bookstore' in data:
-            self.bookstore.update(data['bookstore'])
+        if 'ebookjapan' in data:
+            self.ebookjapan.update(data['ebookjapan'])
         return

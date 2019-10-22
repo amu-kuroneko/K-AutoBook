@@ -16,8 +16,8 @@ And if website is alphapolis, K-AutoBook downloads image files.
 This program is supposed to work on Unix-based OS.
 
 * `Python` Python 3.4.6 or later
-* `pip` @i@ 9.0.1 or later
-* `PhantomJS` PhantomJS 2.0.0 or later
+* `pip` pip 9.0.1 or later
+* `ChromeDriver` ChromeDriver 77.0.3865.40 or later
 
 ## Install
 
@@ -36,13 +36,12 @@ This program is supposed to work on Unix-based OS.
 
 You can specify the format of URL below.
 
-* `http://bookstore.yahoo.co.jp/shoshi-<number>/`
-* `http://bookstore.yahoo.co.jp/unlimited/shoshi-<number>/`
+* `http://ebookjapan.yahoo.co.jp/<number>/<id>`
 * `http://www.alphapolis.co.jp/manga/viewManga/<number>`
 
-_**Sample of Bookstore**_
+_**Sample of ebookjapan**_
 
-You can specify the URL of the page that like [this link](http://bookstore.yahoo.co.jp/shoshi-189531/).
+You can specify the URL of a page that like [this link](https://ebookjapan.yahoo.co.jp/books/145222/A000100547).
 
 _**Sample of Alphaplis**_
 

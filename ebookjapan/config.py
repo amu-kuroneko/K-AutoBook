@@ -89,7 +89,7 @@ class Config(object):
         if 'sleep_time' in data:
             self.sleep_time = data['sleep_time']
         if 'bound_on_side' in data:
-            self._set_bound_on_size(data['bound_on_side'])
+            self._set_bound_on_side(data['bound_on_side'])
         return
 
     def _set_image_format(self, format):
@@ -111,7 +111,7 @@ class Config(object):
                 self.image_format = ImageFormat.PNG
         return
 
-    def _set_bound_on_size(self, bound_on_side):
+    def _set_bound_on_side(self, bound_on_side):
         """
         本の閉じ場所を設定する
         使用できる場所は bookstore.BoundOnSide.BoundOnSide に記されている
