@@ -63,7 +63,8 @@ class YahooLogin(object):
         print('Loading Yahoo JAPAN! top page')
         self.browser.visit(self.YAHOO_JAPAN_URL)
         print('Loading login page')
-        self.browser.click_link_by_partial_text('ログイン')
+        _url = self.browser.find_by_css('#Login [data-rapid_p]').first['href']
+        self.browser.visit(_url)
         for _try_count in range(4):
             _yahoo_id = input('Input Yahoo ID > ') if (
                 self.yahoo_id is None) else self.yahoo_id
