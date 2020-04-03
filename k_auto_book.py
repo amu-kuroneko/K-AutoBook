@@ -5,7 +5,9 @@ import json
 import os
 import re
 from os import path
+from PIL import Image
 from splinter import Browser
+from selenium.webdriver import ChromeOptions
 from config import Config
 from ebookjapan.runner import Runner as Ebookjapan
 from alphapolis.runner import Runner as Alphapolis
@@ -28,16 +30,44 @@ def _make_directory(directory):
             raise
 
 
+def _get_screenshot_size(browser):
+    _dirname = '/tmp/k'
+    _make_directory(_dirname)
+    _filename = _dirname + '/screenshot_size.png'
+    if not browser.driver.save_screenshot(_filename):
+        return None
+    return Image.open(_filename).size
+
+
+def _set_window_size(browser, window_size):
+    _width = window_size['width']
+    _height = window_size['height']
+    browser.driver.set_window_size(_width, _height)
+    _size = _get_screenshot_size(browser)
+    if _size is None:
+        print('ウィンドウサイズの取得に失敗しました')
+        return None
+    if _size != (_width, _height):
+        _width = int(_width * _width / _size[0])
+        _height = int(_height * _height / _size[1])
+        browser.driver.set_window_size(_width, _height)
+    return True
+
+
 def _initialize_browser(config):
     log_name = path.join(config.log_directory, 'ghostdriver.log')
-    _browser = Browser(
-        config.driver, headless=True, user_agent=config.user_agent, service_log_path=log_name)
-    _width = config.window_size['width']
-    _height = config.window_size['height']
+    _params = {
+        'headless': True,
+        'user_agent': config.user_agent,
+        'service_log_path': log_name}
     if config.driver == 'chrome':
-        _width = _width / 2
-        _height = _height / 2
-    _browser.driver.set_window_size(_width, _height)
+        _option = ChromeOptions()
+        _option.add_argument('--headless')
+        _option.add_argument('--no-sandbox')
+        _params['chrome_options'] = _option
+    _browser = Browser(config.driver, **_params)
+    if _set_window_size(_browser, config.window_size) is None:
+        return None
     return _browser
 
 
@@ -46,6 +76,9 @@ def _main():
     _config = Config(_load_config_data())
     _make_directory(_config.log_directory)
     _browser = _initialize_browser(_config)
+
+    if _browser is None:
+        return
 
     _stripper = re.compile(r'^ +')
     while True:
@@ -71,5 +104,6 @@ def _main():
             continue
 
         _runner.run()
+
 
 _main()

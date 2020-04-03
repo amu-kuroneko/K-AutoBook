@@ -112,9 +112,11 @@ class Runner(AbstractRunner):
         実際の本のページに移動する
         """
         _elements = self.browser.find_by_css('.btn.btn--primary.btn--read')
-        if len(_elements) != 0 and _elements.first.text == '読む':
-            _elements.first.click()
-            return True
+        if len(_elements) != 0:
+            _text = _elements.first.text
+            if _text == '読む' or _text == '無料で読む':
+                _elements.first.click()
+                return True
         return False
 
     def _move_demo_page(self):
