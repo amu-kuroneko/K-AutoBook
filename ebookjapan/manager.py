@@ -129,7 +129,7 @@ class Manager(object):
         _sleep_time = (
             self.config.sleep_time if self.config is not None else 0.5)
         self._move_first_page()
-        time.sleep(_sleep_time)
+        time.sleep(_sleep_time * 3)
         _current = 1
         _count = 0
         while True:
