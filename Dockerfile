@@ -18,7 +18,6 @@ WORKDIR /
 RUN mkdir -p /data
 RUN mkdir -p /K-AutoBook
 
-COPY __pycache__        /K-AutoBook/__pycache__
 COPY alphapolis         /K-AutoBook/alphapolis
 COPY ebookjapan         /K-AutoBook/ebookjapan
 COPY k_auto_book.py     /K-AutoBook/
@@ -31,6 +30,5 @@ COPY config.json.sample /K-AutoBook/config.json
 RUN pip install -r /K-AutoBook/requirements.txt
 
 WORKDIR /data
-
 
 ENTRYPOINT /usr/local/bin/python /K-AutoBook/k_auto_book.py
