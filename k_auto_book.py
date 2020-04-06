@@ -64,6 +64,7 @@ def _initialize_browser(config):
         _option = ChromeOptions()
         _option.add_argument('--headless')
         _option.add_argument('--no-sandbox')
+        _option.add_argument('--disable-dev-shm-usage')
         _params['chrome_options'] = _option
     _browser = Browser(config.driver, **_params)
     if _set_window_size(_browser, config.window_size) is None:
