@@ -13,22 +13,19 @@ RUN apt-get update && apt-get install -y unzip && \
     sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list' && \
     apt-get update && apt-get install -y google-chrome-stable
 
-WORKDIR /
+WORKDIR /K-AutoBook
+COPY alphapolis         ./alphapolis
+COPY ebookjapan         ./ebookjapan
+COPY k_auto_book.py     ./
+COPY __init__.py        ./
+COPY config.py          ./
+COPY requirements.txt   ./
+COPY runner.py          ./
+COPY config.json.sample ./config.json
 
-RUN mkdir -p /data
-RUN mkdir -p /K-AutoBook
-
-COPY alphapolis         /K-AutoBook/alphapolis
-COPY ebookjapan         /K-AutoBook/ebookjapan
-COPY k_auto_book.py     /K-AutoBook/
-COPY __init__.py        /K-AutoBook/
-COPY config.py          /K-AutoBook/
-COPY requirements.txt   /K-AutoBook/
-COPY runner.py          /K-AutoBook/
-COPY config.json.sample /K-AutoBook/config.json
-
-RUN pip install -r /K-AutoBook/requirements.txt
+RUN pip install -r ./requirements.txt
 
 WORKDIR /data
 
 ENTRYPOINT /usr/local/bin/python /K-AutoBook/k_auto_book.py
+

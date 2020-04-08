@@ -130,21 +130,24 @@ class Manager(object):
             self.config.sleep_time if self.config is not None else 0.5)
         self._move_first_page()
         time.sleep(_sleep_time * 3)
-        _current = 1
+        _current_url = self.browser.url
+        _current_page = 1
         _count = 0
         while True:
-            self._print_progress(_total, _current)
+            self._print_progress(_total, _current_page)
             _temporary_page = Manager.IMAGE_DIRECTORY + 'K-AutoBook.png'
             self.browser.driver.save_screenshot(_temporary_page)
             _name = '%s%s%03d%s' % (
                 self.directory, self.prefix, _count, _extension)
-            if _current == _total:
+            if _current_page == _total:
                 self._triming(_temporary_page, _name, _format)
                 break
             self._next()
             self._triming(_temporary_page, _name, _format)
             time.sleep(_sleep_time)
-            _current = self._get_current_page()
+            if _current_url != self.browser.url:
+                break
+            _current_page = self._get_current_page()
             _count = _count + 1
         self._print_progress(_total, is_end=True)
         return True
@@ -264,6 +267,7 @@ class Manager(object):
         先頭ページに移動
         """
         while self._get_current_page() != 1:
+            time.sleep(0.2)
             self._previous()
         return
 
@@ -312,6 +316,7 @@ class Manager(object):
     def _get_bound_on_side(self):
         _current = self._get_current_page()
         self._press_key(Keys.ARROW_LEFT)
+        time.sleep(0.2)
         if _current < self._get_current_page():
             return BoundOnSide.RIGHT
         else:
